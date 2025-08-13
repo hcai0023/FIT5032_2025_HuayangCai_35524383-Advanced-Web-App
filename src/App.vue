@@ -13,9 +13,9 @@
         <!-- 用户状态显示 -->
         <div v-if="authStore.isAuthenticated" class="user-info">
           <router-link to="/dashboard">
-            <span class="username">{{ authStore.currentUser.email }}</span>
+            <span class="username">{{ authStore.currentUser }}</span>
           </router-link>
-          <span v-if="authStore.isAdmin" class="admin-badge">ADMIN</span>
+          <span v-if="authStore.isAdmin()" class="admin-badge">ADMIN</span>
           <button @click="logout" class="logout-btn">{{ langText.logout }}</button>
         </div>
         <div v-if="!authStore.isAuthenticated">
@@ -106,6 +106,11 @@ export default {
     // 登出功能
     const logout = () => {
       authStore.logout();
+      router.push({ name: 'home' });
+      console.log("Firebase Logout Successful!");
+      const auth = getAuth()
+      signOut(auth)
+      console.log(auth.currentUser)
     };
 
     return { state, toggleLanguage, langText, authStore, logout };

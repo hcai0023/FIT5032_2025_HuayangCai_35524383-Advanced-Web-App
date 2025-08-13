@@ -55,6 +55,9 @@
         <router-link to="/forum" class="btn btn-secondary">
           <i class="icon">💬</i> {{ langText.forum }}
         </router-link>
+        <button @click="sendEmail" class="email-btn">
+          <i class="icon">✉️</i> {{ langText.sendEmail }}
+        </button>
       </div>
     </div>
   </div>
@@ -63,6 +66,7 @@
 <script>
 import { inject, computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+import emailjs from 'emailjs-com';
 
 export default {
   setup() {
@@ -85,7 +89,8 @@ export default {
             recentForumPost: 'Recent Forum Post',
             healthTips: 'Health Tips for Beginners',
             newBooking: 'New Booking',
-            forum: 'Go to Forum'
+            forum: 'Go to Forum',
+            sendEmail: 'Send Emails'
           }
         : {
             welcome: '欢迎',
@@ -101,7 +106,8 @@ export default {
             recentForumPost: '最近的论坛帖子',
             healthTips: '初学者健康提示',
             newBooking: '新建预约',
-            forum: '前往论坛'
+            forum: '前往论坛',
+            sendEmail: '发送邮件'
           };
     });
     
@@ -110,7 +116,26 @@ export default {
       state,
       authStore
     };
+  },
+  methods: {
+  async sendEmail() {
+    try {
+      await emailjs.send(
+        'service_id', 
+        'template_id',
+        {
+          to_email: this.authStore.currentUser.email,
+          message: '您的预约详情',
+          attachment: 'https://example.com/file.pdf'
+        },
+        'user_id'
+      );
+      alert('邮件已发送');
+    } catch (error) {
+      console.error('发送失败:', error);
+    }
   }
+}
 };
 </script>
 

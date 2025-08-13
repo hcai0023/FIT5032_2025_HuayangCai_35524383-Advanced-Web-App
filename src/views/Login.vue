@@ -1,108 +1,122 @@
 <template>
-  <div class="auth-page">
-    <h2>{{ langText.title }}</h2>
-    <form @submit.prevent="handleLogin">
-      <input v-model="email" :placeholder="langText.email" type="email" required />
-      <input v-model="password" :placeholder="langText.password" type="password" required />
-      <button type="submit" class="cta-btn">{{ langText.loginBtn }}</button>
-    </form>
-    <p v-if="error" class="error">{{ error }}</p>
+  <div class="container mt-5">
+    <div class="row">
+      <div class="col-md-6 offset-md-3">
+        <h1 class="text-center mb-4">Sign In</h1>
+        
+        <div class="card shadow-lg">
+          <div class="card-body p-4">
+            <div class="mb-4">
+              <label class="form-label">Email Address</label>
+              <input 
+                type="email" 
+                class="form-control form-control-lg"
+                v-model="email"
+                placeholder="your.email@example.com"
+              >
+            </div>
+            
+            <div class="mb-4">
+              <label class="form-label">Password</label>
+              <input 
+                type="password" 
+                class="form-control form-control-lg"
+                v-model="password"
+                placeholder="Enter your password"
+              >
+            </div>
+            
+            <div v-if="errorMessage" class="alert alert-danger">
+              <i class="bi bi-exclamation-triangle me-2"></i>{{ errorMessage }}
+            </div>
+            
+            <button 
+              class="btn btn-primary w-100 btn-lg"
+              @click="signin"
+              :disabled="isProcessing"
+            >
+              <span v-if="isProcessing" class="spinner-border spinner-border-sm me-2"></span>
+              {{ isProcessing ? 'Signing In...' : 'Sign In' }}
+            </button>
+            
+            <div class="text-center mt-4">
+              <p>Don't have an account? 
+                <router-link to="/FirebaseRegister" class="text-decoration-none fw-bold">
+                  Register Now
+                </router-link>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
-<script>
-import { inject, computed } from 'vue';
+<script setup>
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { useAuthStore } from '@/stores/auth';
-import { useRouter } from 'vue-router';
 
-export default {
-  setup() {
-    const state = inject('language');
-    const authStore = useAuthStore();
-    const router = useRouter();
+const email = ref("");
+const password = ref("");
+const isProcessing = ref(false);
+const errorMessage = ref("");
+const router = useRouter();
+const authStore = useAuthStore();
+const auth = getAuth()
 
-    const langText = computed(() => {
-      return state.language === '中文'
-        ? {
-            title: '登录',
-            email: '电子邮件',
-            password: '密码',
-            loginBtn: '登录',
-            invalid: '账号或密码错误，请重试。',
-          }
-        : {
-            title: 'Login',
-            email: 'Email',
-            password: 'Password',
-            loginBtn: 'Login',
-            invalid: 'Invalid credentials. Please try again.',
-          };
+const signin = async () => {
+  isProcessing.value = true;
+  errorMessage.value = "";
+  
+  try {
+    // 用户认证
+    const userCredential = await signInWithEmailAndPassword(
+      auth, 
+      email.value, 
+      password.value
+    );
+    
+    console.log("Firebase Login Successful!");
+    router.push("/");
+    console.log(auth.currentUser);
+
+    // 从localStorage获取角色
+    const role = localStorage.getItem(`userRole_${userCredential.user.uid}`) || 'user';
+    
+    // 更新应用状态
+    authStore.login({
+      email: userCredential.user.email,
+      role: role,
+      uid: userCredential.user.uid
     });
+    
+  } catch (error) {
+    console.error("Sign in error:", error);
+    errorMessage.value = getErrorMessage(error.code);
+  } finally {
+    isProcessing.value = false;
+  }
+};
 
-    return {
-      langText,
-      state,
-      authStore,
-      router
-    };
-  },
-  data() {
-    return {
-      email: '',
-      password: '',
-      error: '',
-    };
-  },
-  methods: {
-    handleLogin() {
-      let users = JSON.parse(localStorage.getItem('users')) || [];
-      const user = users.find(u => u.email === this.email && u.password === this.password);
-      
-      if (user) {
-        // 使用认证存储登录
-        this.authStore.login(user);
-        
-        // 重定向到仪表盘
-        this.router.push('/dashboard');
-      } else {
-        this.error = this.state.language === '中文'
-          ? '账号或密码错误，请重试。'
-          : 'Invalid credentials. Please try again.';
-      }
-    },
-  },
+const getErrorMessage = (errorCode) => {
+  const errorMap = {
+    "auth/invalid-email": "Please enter a valid email address",
+    "auth/user-disabled": "This account has been disabled",
+    "auth/user-not-found": "Account not found",
+    "auth/wrong-password": "Incorrect password"
+  };
+  
+  return errorMap[errorCode] || "An error occurred. Please try again.";
 };
 </script>
 
 <style scoped>
-.auth-page {
-  max-width: 400px;
-  margin: 40px auto;
-  padding: 20px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  text-align: center;
-}
-input {
-  display: block;
-  width: 100%;
-  margin: 10px 0;
-  padding: 10px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-}
-.cta-btn {
-  background-color: #000;
-  color: white;
+.card {
+  border-radius: 15px;
   border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-  width: 100%;
-  margin-top: 15px;
-}
-.error {
-  color: red;
-  margin-top: 10px;
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
 }
 </style>

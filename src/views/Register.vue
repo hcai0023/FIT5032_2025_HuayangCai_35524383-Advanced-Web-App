@@ -71,7 +71,7 @@
             
             <div class="text-center mt-4">
               <p>Already have an account? 
-                <router-link to="/FirebaseSignin" class="text-decoration-none fw-bold">
+                <router-link to="/login" class="text-decoration-none fw-bold">
                   Sign In
                 </router-link>
               </p>

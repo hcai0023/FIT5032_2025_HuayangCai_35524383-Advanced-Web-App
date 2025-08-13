@@ -1,6 +1,6 @@
 <template>
   <div class="dashboard">
-    <h1>{{ langText.welcome }}, {{ authStore.currentUser.email }}</h1>
+    <h1>{{ langText.welcome }}, {{ authStore.currentUser }}</h1>
     
     <div v-if="authStore.isAdmin" class="admin-section">
       <h2>{{ langText.adminPanel }}</h2>
@@ -26,9 +26,57 @@
         <button class="btn btn-secondary">
           <i class="icon">📊</i> {{ langText.viewReports }}
         </button>
+        <button class="btn btn-email" @click="showEmailModal = true">
+          <i class="icon">✉️</i> {{ langText.sendEmail }}
+        </button>
       </div>
     </div>
     
+    <div v-if="showEmailModal" class="modal-backdrop">
+      <div class="email-modal">
+        <div class="modal-header">
+          <h3>{{ langText.sendEmail }}</h3>
+          <button @click="closeModal">&times;</button>
+        </div>
+        
+        <div class="modal-body">
+          <div class="form-group">
+            <label>{{ langText.recipient }}</label>
+            <input v-model="emailData.to" type="email" required>
+          </div>
+          
+          <div class="form-group">
+            <label>{{ langText.subject }}</label>
+            <input v-model="emailData.subject">
+          </div>
+          
+          <div class="form-group">
+            <label>{{ langText.message }}</label>
+            <textarea v-model="emailData.text" rows="4"></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label>{{ langText.attachment }}</label>
+            <input type="file" @change="handleAttachment">
+          </div>
+        </div>
+        
+        <div class="modal-footer">
+          <button class="btn btn-cancel" @click="closeModal">
+            {{ langText.cancel }}
+          </button>
+          <button 
+            class="btn btn-send" 
+            @click="sendEmail"
+            :disabled="sending"
+          >
+            <span v-if="sending">{{ langText.sending }}</span>
+            <span v-else>{{ langText.send }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div class="user-content">
       <h2>{{ langText.yourActivities }}</h2>
       <div class="activity-list">
@@ -55,23 +103,28 @@
         <router-link to="/forum" class="btn btn-secondary">
           <i class="icon">💬</i> {{ langText.forum }}
         </router-link>
-        <button @click="sendEmail" class="email-btn">
-          <i class="icon">✉️</i> {{ langText.sendEmail }}
-        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import { inject, computed } from 'vue';
+import { inject, computed, ref } from 'vue';
 import { useAuthStore } from '@/stores/auth';
-import emailjs from 'emailjs-com';
 
 export default {
   setup() {
     const state = inject('language');
     const authStore = useAuthStore();
+    const showEmailModal = ref(false);
+    const sending = ref(false);
+
+    const emailData = ref({
+      to: '',
+      subject: '',
+      text: '',
+      attachment: null
+    });
     
     const langText = computed(() => {
       return state.language === 'EN'
@@ -90,7 +143,14 @@ export default {
             healthTips: 'Health Tips for Beginners',
             newBooking: 'New Booking',
             forum: 'Go to Forum',
-            sendEmail: 'Send Emails'
+            sendEmail: 'Send Emails',
+            recipient: 'Recipient',
+            subject: 'Subject',
+            message: 'Message',
+            attachment: 'Attachment',
+            cancel: 'Cancel',
+            sending: 'Sending',
+            send: 'Send'
           }
         : {
             welcome: '欢迎',
@@ -107,35 +167,83 @@ export default {
             healthTips: '初学者健康提示',
             newBooking: '新建预约',
             forum: '前往论坛',
-            sendEmail: '发送邮件'
+            sendEmail: '发送邮件',
+            recipient: '收件人',
+            subject: '主题',
+            message: '信息',
+            attachment: '附件',
+            cancel: '取消',
+            sending: '发送中',
+            send: '已发送', 
           };
     });
-    
+    const closeModal = () => {
+      showEmailModal.value = false;
+      resetForm();
+    };
+
+    const resetForm = () => {
+      emailData.value = {
+        to: '',
+        subject: '',
+        text: '',
+        attachment: null
+      };
+    };
+
+    const handleAttachment = (event) => {
+      emailData.value.attachment = event.target.files[0];
+    };
+
+    const sendEmail = async () => {
+      sending.value = true;
+      
+      try {
+        const formData = new FormData();
+        formData.append('to', emailData.value.to);
+        formData.append('subject', emailData.value.subject);
+        formData.append('text', emailData.value.text);
+        
+        if (emailData.value.attachment) {
+          formData.append('attachment', emailData.value.attachment);
+        }
+
+        const response = await fetch('http://localhost:3001/api/send-email', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Authorization': `Bearer ${authStore.token}`
+          }
+        });
+
+        const result = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to send email');
+        }
+        
+        alert(`Success\n${result.info}`);
+        closeModal();
+      } catch (error) {
+        console.error('Email error:', error);
+        alert(`Error: ${error.message}`);
+      } finally {
+        sending.value = false;
+      }
+    };
     return {
       langText,
       state,
-      authStore
+      authStore,
+      showEmailModal,
+      emailData,
+      sending,
+      closeModal,
+      handleAttachment,
+      sendEmail
     };
   },
-  methods: {
-  async sendEmail() {
-    try {
-      await emailjs.send(
-        'service_id', 
-        'template_id',
-        {
-          to_email: this.authStore.currentUser.email,
-          message: '您的预约详情',
-          attachment: 'https://example.com/file.pdf'
-        },
-        'user_id'
-      );
-      alert('邮件已发送');
-    } catch (error) {
-      console.error('发送失败:', error);
-    }
-  }
-}
+  
 };
 </script>
 
@@ -219,5 +327,93 @@ export default {
 .activity p {
   margin: 0;
   color: #666;
+}
+.btn-email {
+  background-color: #4caf50;
+  color: white;
+}
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.email-modal {
+  background: white;
+  border-radius: 10px;
+  width: 500px;
+  max-width: 90%;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-header button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+
+.form-group textarea {
+  resize: vertical;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 15px 20px;
+  border-top: 1px solid #eee;
+  gap: 10px;
+}
+
+.btn-cancel {
+  background: #f5f5f5;
+}
+
+.btn-send {
+  background: #4caf50;
+  color: white;
+}
+
+.btn-send:disabled {
+  background: #cccccc;
+  cursor: not-allowed;
 }
 </style>

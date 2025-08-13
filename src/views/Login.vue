@@ -41,7 +41,7 @@
             
             <div class="text-center mt-4">
               <p>Don't have an account? 
-                <router-link to="/FirebaseRegister" class="text-decoration-none fw-bold">
+                <router-link to="/register" class="text-decoration-none fw-bold">
                   Register Now
                 </router-link>
               </p>

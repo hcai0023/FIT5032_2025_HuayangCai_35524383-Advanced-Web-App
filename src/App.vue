@@ -45,8 +45,12 @@
 
 <script>
 import { provide, reactive, computed, onMounted } from 'vue';
+import { useRouter } from "vue-router";
 import { useAuthStore } from '@/stores/auth';
+import { getAuth, signOut } from 'firebase/auth';
+import app from '@/firebase/init';
 
+const router = useRouter();
 export default {
   name: 'App',
   setup() {
@@ -106,9 +110,9 @@ export default {
     // 登出功能
     const logout = () => {
       authStore.logout();
-      router.push({ name: 'home' });
+      router.push("/");
       console.log("Firebase Logout Successful!");
-      const auth = getAuth()
+      const auth = getAuth(app)
       signOut(auth)
       console.log(auth.currentUser)
     };

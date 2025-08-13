@@ -13,6 +13,7 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "@vuepic/vue-datepicker": "^11.0.2",
     "body-parser": "^2.2.0",
     "bootstrap": "^5.3.7",
     "cors": "^2.8.5",
@@ -20,11 +21,14 @@
     "emailjs-com": "^3.2.0",
     "express": "^5.1.0",
     "firebase": "^12.1.0",
+    "jspdf": "^3.0.1",
+    "jspdf-autotable": "^5.0.2",
     "multer": "^2.0.2",
     "nodemailer": "^7.0.5",
     "pinia": "^3.0.3",
     "vue": "^3.5.17",
-    "vue-router": "^4.5.1"
+    "vue-router": "^4.5.1",
+    "vue3-easy-data-table": "^1.5.47"
   },
   "devDependencies": {
     "@eslint/js": "^9.29.0",

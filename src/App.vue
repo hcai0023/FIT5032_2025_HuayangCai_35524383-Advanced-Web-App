@@ -50,7 +50,6 @@ import { useAuthStore } from '@/stores/auth';
 import { getAuth, signOut } from 'firebase/auth';
 import app from '@/firebase/init';
 
-const router = useRouter();
 export default {
   name: 'App',
   setup() {
@@ -108,6 +107,7 @@ export default {
     });
     
     // 登出功能
+    const router = useRouter();
     const logout = () => {
       authStore.logout();
       router.push("/");

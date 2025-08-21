@@ -70,6 +70,8 @@
 import { inject, computed, ref, onMounted } from 'vue';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
+import "leaflet-routing-machine";
 
 export default {
   name: 'Resources',
@@ -294,101 +296,50 @@ export default {
     // 计算路线
     const calculateRoute = async () => {
       if (!routeFrom.value.trim() || !routeTo.value.trim()) return;
-      
-      // 清除之前的路线
-      if (routeLayer.value) {
-        mapInstance.value.removeLayer(routeLayer.value);
-      }
-      
+
       try {
-        const apiKey = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImFlYTBiYTQzZTMwZjQwYzQ5MmNiYmEzOTY1OWM2MmJjIiwiaCI6Im11cm11cjY0In0=';
-        
-        // 获取起点和终点坐标
+        // 1. 通过 Nominatim 获取起点和终点坐标
         const fromResponse = await fetch(
           `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(routeFrom.value)}&format=json&limit=1`
         );
-        
         const toResponse = await fetch(
           `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(routeTo.value)}&format=json&limit=1`
         );
-        
-        const [fromResults, toResults] = await Promise.all([fromResponse, toResponse]);
-        const [fromData] = await fromResults.json();
-        const [toData] = await toResults.json();
-        
-        if (!fromData || !toData) throw new Error('无法找到地点坐标');
-        
-        // 获取路线 - 使用正确的API端点和格式
-        const routeResponse = await fetch(
-          `https://api.openrouteservice.org/v2/directions/driving-car/geojson`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': apiKey,
-              'Content-Type': 'application/json',
-              'Accept': 'application/geo+json'
-            },
-            body: JSON.stringify({
-              coordinates: [
-                [parseFloat(fromData.lon), parseFloat(fromData.lat)],
-                [parseFloat(toData.lon), parseFloat(toData.lat)]
-              ]
-            })
-          }
-        );
-        
-        // 检查响应状态
-        if (!routeResponse.ok) {
-          const errorData = await routeResponse.json();
-          throw new Error(`API错误: ${errorData.error.message || routeResponse.statusText}`);
+
+        const [fromData] = await fromResponse.json();
+        const [toData] = await toResponse.json();
+
+        if (!fromData || !toData) {
+          throw new Error("无法找到地点坐标");
         }
-        
-        const routeData = await routeResponse.json();
-        
-        // 调试：打印API响应
-        console.log('OpenRouteService响应:', routeData);
-        
-        // 提取路线坐标（根据实际API响应结构）
-        let routeCoordinates = [];
-        
-        // 检查不同的响应格式
-        if (routeData.features && routeData.features.length > 0) {
-          // GeoJSON格式
-          routeCoordinates = routeData.features[0].geometry.coordinates;
-        } else if (routeData.routes && routeData.routes.length > 0) {
-          // 旧版JSON格式
-          routeCoordinates = routeData.routes[0].geometry.coordinates;
-        } else {
-          throw new Error('无法解析路线数据');
+
+        // 2. 清理之前的路线
+        if (routeLayer.value) {
+          mapInstance.value.removeControl(routeLayer.value);
         }
-        
-        // 转换为Leaflet需要的[lat, lon]格式
-        const leafletCoordinates = routeCoordinates.map(coord => [coord[1], coord[0]]);
-        
-        // 绘制路线
-        routeLayer.value = L.polyline(leafletCoordinates, {
-          color: '#1e90ff',
-          weight: 6
+
+        // 3. 使用 Leaflet Routing Machine 绘制路线
+        routeLayer.value = L.Routing.control({
+          waypoints: [
+            L.latLng(fromData.lat, fromData.lon),
+            L.latLng(toData.lat, toData.lon)
+          ],
+          routeWhileDragging: true,
+          lineOptions: {
+            styles: [{ color: "#1E90FF", weight: 5 }]
+          },
+          show: false // 不显示左侧的路线面板
         }).addTo(mapInstance.value);
-        
-        // 添加起点和终点标记
-        const startMarker = L.marker([fromData.lat, fromData.lon])
-          .addTo(mapInstance.value)
-          .bindPopup(`<b>起点</b><br>${routeFrom.value}`);
-        
-        const endMarker = L.marker([toData.lat, toData.lon])
-          .addTo(mapInstance.value)
-          .bindPopup(`<b>终点</b><br>${routeTo.value}`);
-        
-        // 调整地图视图
-        const bounds = L.latLngBounds(leafletCoordinates);
+
+        // 自动缩放视图
+        const bounds = L.latLngBounds([
+          [fromData.lat, fromData.lon],
+          [toData.lat, toData.lon]
+        ]);
         mapInstance.value.fitBounds(bounds);
-        
-        // 保存标记以便清除
-        poiMarkers.value.push(startMarker, endMarker);
-        
+
       } catch (error) {
-        console.error('路线计算失败:', error);
+        console.error("路线计算失败:", error);
         alert(`路线计算失败: ${error.message}`);
       }
     };

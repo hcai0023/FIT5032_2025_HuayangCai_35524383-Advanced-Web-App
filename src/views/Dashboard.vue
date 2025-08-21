@@ -83,57 +83,10 @@
         <button class="btn btn-secondary">
           <i class="icon">📊</i> {{ langText.viewReports }}
         </button>
-        <button class="btn btn-email" @click="showEmailModal = true">
-          <i class="icon">✉️</i> {{ langText.sendEmail }}
-        </button>
+        <router-link class="btn btn-email" to="/email">📧 {{ langText.sendEmail }}</router-link>
       </div>
     </div>
     
-    <div v-if="showEmailModal" class="modal-backdrop">
-      <div class="email-modal">
-        <div class="modal-header">
-          <h3>{{ langText.sendEmail }}</h3>
-          <button @click="closeModal">&times;</button>
-        </div>
-        
-        <div class="modal-body">
-          <div class="form-group">
-            <label>{{ langText.recipient }}</label>
-            <input v-model="emailData.to" type="email" required>
-          </div>
-          
-          <div class="form-group">
-            <label>{{ langText.subject }}</label>
-            <input v-model="emailData.subject">
-          </div>
-          
-          <div class="form-group">
-            <label>{{ langText.message }}</label>
-            <textarea v-model="emailData.text" rows="4"></textarea>
-          </div>
-          
-          <div class="form-group">
-            <label>{{ langText.attachment }}</label>
-            <input type="file" @change="handleAttachment">
-          </div>
-        </div>
-        
-        <div class="modal-footer">
-          <button class="btn btn-cancel" @click="closeModal">
-            {{ langText.cancel }}
-          </button>
-          <button 
-            class="btn btn-send" 
-            @click="sendEmail"
-            :disabled="sending"
-          >
-            <span v-if="sending">{{ langText.sending }}</span>
-            <span v-else>{{ langText.send }}</span>
-          </button>
-        </div>
-      </div>
-    </div>
-
     <div class="user-content">
       <h2>{{ langText.yourActivities }}</h2>
       <!-- 预约表格 -->
@@ -231,16 +184,6 @@ export default {
   setup() {
     const state = inject('language');
     const authStore = useAuthStore();
-    const showEmailModal = ref(false);
-    const sending = ref(false);
-
-    const emailData = ref({
-      to: '',
-      subject: '',
-      text: '',
-      attachment: null
-    });
-    
     // 用户表格配置
     const userTable = reactive({
       data: [],
@@ -627,108 +570,10 @@ export default {
       alert(langText.value.exportSuccess);
     };
     
-    const closeModal = () => {
-      showEmailModal.value = false;
-      resetForm();
-    };
-
-    const resetForm = () => {
-      emailData.value = {
-        to: '',
-        subject: '',
-        text: '',
-        attachment: null
-      };
-    };
-
-    const handleAttachment = (event) => {
-      emailData.value.attachment = event.target.files[0];
-    };
-
-    const sendEmail = async () => {
-      sending.value = true;
-      
-      try {
-        let attachmentData = null;
-        
-        // 如果有附件，转换为 base64
-        if (emailData.value.attachment) {
-          attachmentData = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve({
-              filename: emailData.value.attachment.name,
-              contentType: emailData.value.attachment.type,
-              content: reader.result.split(',')[1] // 移除 data URL 前缀
-            });
-            reader.onerror = reject;
-            reader.readAsDataURL(emailData.value.attachment);
-          });
-        }
-
-        // 调用 Vercel Serverless Function
-        const response = await fetch('http://localhost:3001/api/send-email', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authStore.token}`
-          },
-          body: JSON.stringify({
-            to: emailData.value.to,
-            subject: emailData.value.subject,
-            text: emailData.value.text,
-            attachment: attachmentData
-          })
-        });
-
-        // 获取响应文本
-        const responseText = await response.text();
-        
-        try {
-          // 尝试解析为 JSON
-          const result = JSON.parse(responseText);
-          
-          if (!response.ok) {
-            throw new Error(result.error || 'Failed to send email');
-          }
-          
-          alert(result.message);
-          closeModal();
-        } catch (parseError) {
-          // 如果解析失败，显示原始响应
-          console.error('JSON parse error:', parseError);
-          console.log('Raw response:', responseText);
-          
-          // 显示更友好的错误信息
-          let errorMessage = `The server returned an invalid response:`;
-          
-          if (responseText.includes('<html>')) {
-            errorMessage += '(HTML Page)';
-          } else if (responseText.trim() === '') {
-            errorMessage += '(Empty Response)';
-          } else {
-            errorMessage += `: ${responseText.substring(0, 100)}...`;
-          }
-          
-          throw new Error(errorMessage);
-        }
-        
-      } catch (error) {
-        console.error('Email error:', error);
-        alert(`Error: ${error.message}`);
-      } finally {
-        sending.value = false;
-      }
-    };
     return {
       langText,
       state,
       authStore,
-      showEmailModal,
-      emailData,
-      sending,
-      closeModal,
-      handleAttachment,
-      sendEmail,
       userColumns: userTable.columns,
       userTable,
       appointmentColumns: appointmentTable.columns,

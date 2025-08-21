@@ -8,7 +8,7 @@
         <router-link to="/resources">{{ langText.resources }}</router-link>
         <router-link to="/booking">{{ langText.services }}</router-link>
         <router-link to="/forum">{{ langText.forum }}</router-link>
-        <button class="lang-btn" @click="toggleLanguage">🌐{{ state.language }}</button>
+        <button class="lang-btn" aria-label="Select Language" @click="toggleLanguage">🌐{{ state.language }}</button>
         
         <!-- 用户状态显示 -->
         <div v-if="authStore.isAuthenticated" class="user-info">

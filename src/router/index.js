@@ -7,6 +7,7 @@ import Register from '../views/Register.vue';
 import About from '../views/About.vue'
 import Forum from '@/views/Forum.vue';
 import Resources from '@/views/Resources.vue';
+import Email from '@/views/Email.vue';
 import { useAuthStore } from '@/stores/auth';
 
 const routes = [
@@ -48,6 +49,11 @@ const routes = [
   { 
     path: '/resources', 
     component: Resources,
+    meta: { public: true }
+  },
+  {
+    path: '/email',
+    component: Email,
     meta: { public: true }
   },
 ];

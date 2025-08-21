@@ -6,7 +6,9 @@
         <p>{{ langText.desc1 }}</p>
         <router-link to="/booking" class="cta-btn">{{ langText.button1 }}</router-link>
       </div>
-      <div class="section-image">[Promotional Photo Placeholder]</div>
+      <div class="section-image">
+        <img src="../assets/Maternal-Child-Health.jpg" class="responsive-img"></img>
+      </div>
     </section>
 
     <section class="section">
@@ -15,11 +17,15 @@
         <p>{{ langText.desc2 }}</p>
         <router-link to="/booking" class="cta-btn">{{ langText.button2 }}</router-link>
       </div>
-      <div class="section-image">[Promotional Photo Placeholder]</div>
+      <div class="section-image">
+        <img src="../assets/Physiotherapy.jpg" class="responsive-img"></img>
+      </div>
     </section>
 
     <section class="section reverse">
-      <div class="section-image">[Promotional Photo Placeholder]</div>
+      <div class="section-image">
+        <img src="../assets/mental-health-support.jpg" class="responsive-img"></img>
+      </div>
       <div class="section-content">
         <h2>{{ langText.title3 }}</h2>
         <p>{{ langText.desc3 }}</p>
@@ -139,6 +145,7 @@ export default {
   align-items: center;
   justify-content: center;
   border: 1px dashed #aaa;
+  overflow: hidden;
 }
 .cta-btn {
   background-color: #000;
@@ -159,5 +166,11 @@ export default {
 }
 .footer-links p {
   margin: 5px 0;
+}
+.responsive-img {
+  max-width: 100%;
+  height: auto; 
+  border-radius: 8px;
+  object-fit: cover;
 }
 </style>

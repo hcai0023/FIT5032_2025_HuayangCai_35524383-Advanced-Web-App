@@ -7,7 +7,7 @@
         <div class="card shadow-lg">
           <div class="card-body p-4">
             <div class="mb-3">
-              <label class="form-label">Email Address</label>
+              <label class="form-label" tabindex="0">Email Address</label>
               <input 
                 type="email" 
                 class="form-control form-control-lg"
@@ -17,7 +17,7 @@
             </div>
             
             <div class="mb-3">
-              <label class="form-label">Password</label>
+              <label class="form-label" tabindex="0">Password</label>
               <input 
                 type="password" 
                 class="form-control form-control-lg"
@@ -27,7 +27,7 @@
             </div>
             
             <div class="mb-4">
-              <label class="form-label">Account Type</label>
+              <label class="form-label" tabindex="0">Account Type</label>
               <div class="d-flex gap-3">
                 <button 
                   class="btn btn-outline-primary flex-grow-1"

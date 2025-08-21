@@ -1,7 +1,7 @@
 <template>
   <div>
     <header class="header">
-      <div class="logo">[LOGO]</div>
+      <div class="logo">Migrant communities health charity</div>
       <nav class="nav-links">
         <router-link to="/" class="home-icon">🏠</router-link>
         <router-link to="/about">{{ langText.about }}</router-link>
@@ -27,7 +27,7 @@
     <router-view></router-view>
     <footer class="footer">
       <div class="footer-content">
-        <div class="logo">[LOGO]</div>
+        <div class="logo">Migrant communities health charity</div>
         <div>
           <p>{{ langText.latestBlog }}</p>
           <p>{{ langText.ready }}</p>

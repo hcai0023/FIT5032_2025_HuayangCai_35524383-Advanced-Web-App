@@ -83,7 +83,6 @@
         <button class="btn btn-secondary">
           <i class="icon">📊</i> {{ langText.viewReports }}
         </button>
-        <router-link class="btn btn-email" to="/email">📧 {{ langText.sendEmail }}</router-link>
       </div>
     </div>
     
@@ -168,6 +167,7 @@
         <router-link to="/forum" class="btn btn-secondary">
           <i class="icon">💬</i> {{ langText.forum }}
         </router-link>
+        <router-link class="btn btn-email" to="/email">📧 {{ langText.sendEmail }}</router-link>
       </div>
     </div>
   </div>
